@@ -23,14 +23,14 @@
                   <Image url="@../img/MainAsset_2.png" />
                </image>
             </ImageView>
-            <TextField fx:id="nameInputField" alignment="CENTER" blendMode="SRC_ATOP" prefHeight="66.0" prefWidth="223.0" promptText="Type your name..." style="-fx-background-color: transparent; -fx-border-color: transparent;">
+            <TextField fx:id="inputfieldlabel" alignment="CENTER" blendMode="SRC_ATOP" prefHeight="66.0" prefWidth="223.0" promptText="Type your name..." style="-fx-background-color: transparent; -fx-border-color: transparent;">
                <font>
                   <Font name="VCR OSD Mono" size="17.0" />
                </font>
             </TextField>
          </children>
       </StackPane>
-      <Button layoutX="148.0" layoutY="560.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="111.0" style="-fx-background-color: #ebb394;" text="Sign in">
+      <Button id="signbtn" fx:id="signbtn" layoutX="148.0" layoutY="560.0" mnemonicParsing="false" onAction="#handleSignIn" prefHeight="36.0" prefWidth="111.0" style="-fx-background-color: #ebb394;" text="Sign in">
          <font>
             <Font name="VCR OSD Mono" size="20.0" />
          </font>

@@ -6,6 +6,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import java.io.File;
 
 public class Main extends Application {
 
@@ -15,6 +16,7 @@ public class Main extends Application {
         AnchorPane root = FXMLLoader.load(getClass().getResource("LogoScreen.fxml"));
         Scene scene = new Scene(root, 400, 900, Color.WHITE); // Make sure to match your design dimensions
         primaryStage.setScene(scene);
+        primaryStage.setResizable(false);
         primaryStage.show();
 
         // Apply the fade-in effect
@@ -37,16 +39,39 @@ public class Main extends Application {
         fadeIn.setOnFinished(event -> {
             fadeOut.play(); // Play the fade-out effect after fade-in
             fadeOut.setOnFinished(e -> {
-                // Load the GuildRegistration.fxml after fade-out
-                try {
-                    AnchorPane registrationRoot = FXMLLoader.load(getClass().getResource("GuildRegistration.fxml"));
-                    Scene registrationScene = new Scene(registrationRoot);
-                    primaryStage.setScene(registrationScene); // Switch to the next scene
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                // Check if the user is already registered
+                if (isUserRegistered()) {
+                    // Load the MainDashboard.fxml if the user is already registered
+                    goToMainDashboard(primaryStage);
+                } else {
+                    // Load the GuildRegistration.fxml if the user isn't registered
+                    try {
+                        AnchorPane registrationRoot = FXMLLoader.load(getClass().getResource("GuildRegistration.fxml"));
+                        Scene registrationScene = new Scene(registrationRoot, 400, 900);
+                        primaryStage.setScene(registrationScene); // Switch to the registration scene
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
             });
         });
+    }
+
+    // Check if the user is already registered
+    private boolean isUserRegistered() {
+        File file = new File("user_data.json");
+        return file.exists();
+    }
+
+    // Method to switch to the Main Dashboard
+    private void goToMainDashboard(Stage stage) {
+        try {
+            AnchorPane dashboardRoot = FXMLLoader.load(getClass().getResource("MainDashboard.fxml"));
+            Scene dashboardScene = new Scene(dashboardRoot, 400, 900);
+            stage.setScene(dashboardScene); // Switch to the Main Dashboard
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
