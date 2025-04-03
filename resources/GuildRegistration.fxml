@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="400.0" style="-fx-background-color: #faa373;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="RegisterController">
+   <children>
+      <ImageView fitHeight="609.0" fitWidth="380.0" layoutX="10.0" layoutY="146.0" pickOnBounds="true">
+         <image>
+            <Image url="@../resources/img/MainAsset_1.png" />
+         </image>
+      </ImageView>
+      <StackPane layoutX="87.0" layoutY="407.0" prefHeight="111.0" prefWidth="227.0">
+         <children>
+            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../resources/img/MainAsset_2.png" />
+               </image>
+            </ImageView>
+            <TextField fx:id="inputfieldlabel" alignment="CENTER" blendMode="SRC_ATOP" prefHeight="66.0" prefWidth="223.0" promptText="Type your name..." style="-fx-background-color: transparent; -fx-border-color: transparent;">
+               <font>
+                  <Font name="VCR OSD Mono" size="17.0" />
+               </font>
+            </TextField>
+         </children>
+      </StackPane>
+      <Button id="signbtn" fx:id="signbtn" layoutX="148.0" layoutY="560.0" mnemonicParsing="false" onAction="#handleSignIn" prefHeight="36.0" prefWidth="111.0" style="-fx-background-color: #ebb394;" text="Sign in">
+         <font>
+            <Font name="VCR OSD Mono" size="20.0" />
+         </font>
+      </Button>
+      <Label layoutX="59.0" layoutY="281.0" prefHeight="111.0" prefWidth="306.0" text="The Guild Registration opens!" textFill="#8f4a18" wrapText="true">
+         <font>
+            <Font name="VCR OSD Mono" size="25.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>

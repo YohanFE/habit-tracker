@@ -392,9 +392,11 @@ public class DashboardController implements Initializable {
     private void updateRankImage() {
         if (rankImageView == null) return;
         
-        String imagePath = "/img/" + rank + "Rank.png";
+        String imagePath = "resources/img/" + rank + "Rank.png";
         try {
-            Image rankImage = new Image(getClass().getResourceAsStream(imagePath));
+            // Using File URL to load image from external directory
+            File imageFile = new File(imagePath);
+            Image rankImage = new Image(imageFile.toURI().toString());
             rankImageView.setImage(rankImage);
         } catch (Exception e) {
             System.out.println("Error loading rank image: " + e.getMessage());
@@ -406,8 +408,10 @@ public class DashboardController implements Initializable {
         if (rankviewlabel != null) {
             // Since rankviewlabel is an ImageView, we need to load an appropriate image
             try {
-                String imagePath = "/img/" + rank + "Rank.png";
-                Image rankImage = new Image(getClass().getResourceAsStream(imagePath));
+                String imagePath = "resources/img/" + rank + "Rank.png";
+                // Using File URL to load image from external directory
+                File imageFile = new File(imagePath);
+                Image rankImage = new Image(imageFile.toURI().toString());
                 rankviewlabel.setImage(rankImage);
             } catch (Exception e) {
                 System.out.println("Error loading rank image for rankviewlabel: " + e.getMessage());
@@ -486,7 +490,10 @@ public class DashboardController implements Initializable {
         // Change receptionist image to happy
         if (receptionistimage != null) {
             try {
-                Image happyReceptionist = new Image(getClass().getResourceAsStream("/img/Receptionist_Happy.png"));
+                String imagePath = "resources/img/Receptionist_Happy.png";
+                // Using File URL to load image from external directory
+                File imageFile = new File(imagePath);
+                Image happyReceptionist = new Image(imageFile.toURI().toString());
                 receptionistimage.setImage(happyReceptionist);
             } catch (Exception e) {
                 System.out.println("Error loading receptionist image: " + e.getMessage());
@@ -510,7 +517,10 @@ public class DashboardController implements Initializable {
         // Set default receptionist image
         if (receptionistimage != null) {
             try {
-                Image idleReceptionist = new Image(getClass().getResourceAsStream("/img/Receptionist_Idle.png"));
+                String imagePath = "resources/img/Receptionist_Idle.png";
+                // Using File URL to load image from external directory
+                File imageFile = new File(imagePath);
+                Image idleReceptionist = new Image(imageFile.toURI().toString());
                 receptionistimage.setImage(idleReceptionist);
             } catch (Exception e) {
                 System.out.println("Error loading receptionist image: " + e.getMessage());
