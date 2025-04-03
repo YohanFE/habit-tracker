@@ -57,7 +57,7 @@ public class RegisterController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("MainDashboard.fxml"));
             AnchorPane dashboardRoot = loader.load();
-            Scene dashboardScene = new Scene(dashboardRoot, 400, 900);
+            Scene dashboardScene = new Scene(dashboardRoot, 400, 950);
             
             Stage stage = (Stage) signbtn.getScene().getWindow();
             stage.setScene(dashboardScene);

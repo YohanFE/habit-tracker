@@ -19,7 +19,7 @@
             <Image url="@../img/WoodenFrameMedieval.png" />
          </image>
       </ImageView>
-      <ImageView fitHeight="318.0" fitWidth="205.0" layoutX="180.0" layoutY="76.0" pickOnBounds="true" preserveRatio="true">
+      <ImageView fx:id="receptionistimage" fitHeight="308.0" fitWidth="191.0" layoutX="180.0" layoutY="86.0" pickOnBounds="true" preserveRatio="true">
          <image>
             <Image url="@../img/Receptionist_Idle.png" />
          </image>
@@ -39,17 +39,17 @@
             <Font name="VCR OSD Mono" size="9.0" />
          </font>
       </Label>
-      <Button layoutX="63.0" layoutY="599.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Check in" textFill="#ffcdac">
+      <Button fx:id="dailybtn" layoutX="63.0" layoutY="599.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Check in" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
       </Button>
-      <Label layoutX="66.0" layoutY="659.0" text="Armor Maintenance" textFill="#4a1b03">
+      <Label layoutX="66.0" layoutY="659.0" text="Honing the Mind" textFill="#4a1b03">
          <font>
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Button id="armoryMaintenanceBtn" layoutX="75.0" layoutY="686.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
+      <Button fx:id="meditationbtn" layoutX="75.0" layoutY="686.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
@@ -59,7 +59,7 @@
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Button id="scoutingMissionBtn" layoutX="75.0" layoutY="783.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
+      <Button fx:id="scoutingMissionBtn" layoutX="75.0" layoutY="783.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
@@ -69,17 +69,17 @@
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Button id="trainingGroundsBtn" layoutX="75.0" layoutY="875.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
+      <Button fx:id="trainingGroundsBtn" layoutX="75.0" layoutY="875.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
       </Button>
-      <Label layoutX="64.0" layoutY="640.0" prefHeight="29.0" prefWidth="127.0" text="Do a productive Task" textFill="#403e3c">
+      <Label layoutX="64.0" layoutY="640.0" prefHeight="29.0" prefWidth="127.0" text="Meditate for 5 minutes" textFill="#403e3c">
          <font>
             <Font name="VCR OSD Mono" size="9.0" />
          </font>
       </Label>
-      <Label layoutX="64.0" layoutY="736.0" prefHeight="29.0" prefWidth="127.0" text="Take a walk for 1km" textFill="#403e3c">
+      <Label layoutX="77.0" layoutY="726.0" prefHeight="29.0" prefWidth="127.0" text="Take a walk for 1km" textFill="#403e3c">
          <font>
             <Font name="VCR OSD Mono" size="9.0" />
          </font>
@@ -89,32 +89,32 @@
             <Font name="VCR OSD Mono" size="9.0" />
          </font>
       </Label>
-      <Label id="loginExpLabel" layoutX="191.0" layoutY="599.0" prefHeight="29.0" prefWidth="67.0" text="20 EXP" textFill="#6f4002">
+      <Label fx:id="loginExpLabel" layoutX="191.0" layoutY="599.0" prefHeight="29.0" prefWidth="67.0" text="20 EXP" textFill="#6f4002">
          <font>
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Label id="armorExpLabel" layoutX="199.0" layoutY="686.0" prefHeight="29.0" prefWidth="67.0" text="20 EXP" textFill="#6f4002">
+      <Label fx:id="meditationExpLabel" layoutX="199.0" layoutY="686.0" prefHeight="29.0" prefWidth="67.0" text="20 EXP" textFill="#6f4002">
          <font>
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Label id="scoutExpLabel" layoutX="199.0" layoutY="783.0" prefHeight="29.0" prefWidth="67.0" text="10 EXP" textFill="#6f4002">
+      <Label fx:id="scoutExpLabel" layoutX="199.0" layoutY="783.0" prefHeight="29.0" prefWidth="67.0" text="10 EXP" textFill="#6f4002">
          <font>
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Label id="trainingExpLabel" layoutX="199.0" layoutY="875.0" prefHeight="29.0" prefWidth="67.0" text="10 EXP" textFill="#6f4002">
+      <Label fx:id="trainingExpLabel" layoutX="199.0" layoutY="875.0" prefHeight="29.0" prefWidth="67.0" text="10 EXP" textFill="#6f4002">
          <font>
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Label id="dialogueLabel" layoutX="18.0" layoutY="190.0" prefHeight="120.0" prefWidth="161.0" style="-fx-background-color: Preventing Cheating in Task SubmissionTo ensure users honestly complete tasks, implement the following measures:1. Time-Based Check (Prevent Quick Submissions)    Track the time when the app opens.    If the task is submitted too fast (e.g., under 15 seconds) → Give only 1 XP.    Receptionist’s response: &quot;I am very much disappointed in you.&quot;2. Keyword Filtering (Prevent Random Inputs)    Create a list of valid keywords (e.g., clean, wash, study, organize).    Check if the user’s input contains at least one real word.    If not → Reject the submission and display an error message.3. Word Count Requirement (Force Meaningful Responses)    Require at least 3 words in the input.    If the input is too short → Reject submission and notify the user.4. Cooldown Between Submissions (Prevent Spam Farming XP)    Store the last submission time.    If they try to submit the same task within 5 minutes, reject it.    Display a message: &quot;Tasks take time. Don't rush it!&quot;Final Mechanism:    If they submit too fast, give 1 XP instead of 20 XP.    If they input gibberish, reject and ask for a real response.    If the input is too short, reject it and ask for more details.    If they try submitting again too soon, block it with a cooldown.These rules discourage dishonesty and reinforce the app’s core purpose: discipline through accountability.This should be concise enough for your notes! Let me know if you need adjustments. 🚀;" text="Welcome to the Guild!" textAlignment="JUSTIFY" textFill="WHITE" wrapText="true">
+      <Label fx:id="dialogueLabel" layoutX="18.0" layoutY="190.0" prefHeight="120.0" prefWidth="161.0" style="-fx-background-color: Preventing Cheating in Task SubmissionTo ensure users honestly complete tasks, implement the following measures:1. Time-Based Check (Prevent Quick Submissions)    Track the time when the app opens.    If the task is submitted too fast (e.g., under 15 seconds) → Give only 1 XP.    Receptionist’s response: &quot;I am very much disappointed in you.&quot;2. Keyword Filtering (Prevent Random Inputs)    Create a list of valid keywords (e.g., clean, wash, study, organize).    Check if the user’s input contains at least one real word.    If not → Reject the submission and display an error message.3. Word Count Requirement (Force Meaningful Responses)    Require at least 3 words in the input.    If the input is too short → Reject submission and notify the user.4. Cooldown Between Submissions (Prevent Spam Farming XP)    Store the last submission time.    If they try to submit the same task within 5 minutes, reject it.    Display a message: &quot;Tasks take time. Don't rush it!&quot;Final Mechanism:    If they submit too fast, give 1 XP instead of 20 XP.    If they input gibberish, reject and ask for a real response.    If the input is too short, reject it and ask for more details.    If they try submitting again too soon, block it with a cooldown.These rules discourage dishonesty and reinforce the app’s core purpose: discipline through accountability.This should be concise enough for your notes! Let me know if you need adjustments. 🚀;" text="Welcome to the Guild!" textAlignment="JUSTIFY" textFill="WHITE" wrapText="true">
          <font>
             <Font name="VCR OSD Mono" size="19.0" />
          </font>
       </Label>
-      <ImageView id="rankviewlabel" fitHeight="62.0" fitWidth="127.0" layoutX="64.0" layoutY="9.0" pickOnBounds="true">
+      <ImageView fx:id="rankviewlabel" fitHeight="62.0" fitWidth="127.0" layoutX="64.0" layoutY="9.0" pickOnBounds="true">
          <image>
             <Image url="@../img/RookieRank.png" />
          </image>

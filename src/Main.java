@@ -14,7 +14,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         // Load the LogoScreen.fxml
         AnchorPane root = FXMLLoader.load(getClass().getResource("LogoScreen.fxml"));
-        Scene scene = new Scene(root, 400, 900, Color.WHITE); // Make sure to match your design dimensions
+        Scene scene = new Scene(root, Color.WHITE); // Make sure to match your design dimensions
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
@@ -47,7 +47,7 @@ public class Main extends Application {
                     // Load the GuildRegistration.fxml if the user isn't registered
                     try {
                         AnchorPane registrationRoot = FXMLLoader.load(getClass().getResource("GuildRegistration.fxml"));
-                        Scene registrationScene = new Scene(registrationRoot, 400, 900);
+                        Scene registrationScene = new Scene(registrationRoot);
                         primaryStage.setScene(registrationScene); // Switch to the registration scene
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -67,7 +67,7 @@ public class Main extends Application {
     private void goToMainDashboard(Stage stage) {
         try {
             AnchorPane dashboardRoot = FXMLLoader.load(getClass().getResource("MainDashboard.fxml"));
-            Scene dashboardScene = new Scene(dashboardRoot, 400, 900);
+            Scene dashboardScene = new Scene(dashboardRoot);
             stage.setScene(dashboardScene); // Switch to the Main Dashboard
         } catch (Exception ex) {
             ex.printStackTrace();
