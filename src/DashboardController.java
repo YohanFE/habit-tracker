@@ -1,552 +1,759 @@
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import java.io.File;
+import java.io.FileWriter;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Timer;
+import java.util.TimerTask;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
+import javafx.animation.PauseTransition;
+import javafx.animation.ScaleTransition;
+import javafx.animation.TranslateTransition;
 import javafx.util.Duration;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.ResourceBundle;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-
 import org.json.JSONObject;
-import org.json.JSONException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-public class DashboardController implements Initializable {
+public class DashboardController {
 
-    // FXML Button Components
+    // FXML Annotated UI Elements
     @FXML private Button dailybtn;
     @FXML private Button meditationBtn;
     @FXML private Button scoutingMissionBtn;
     @FXML private Button trainingGroundsBtn;
     
-    // FXML Label Components
     @FXML private Label loginExpLabel;
     @FXML private Label meditationExpLabel;
     @FXML private Label scoutExpLabel;
     @FXML private Label trainingExpLabel;
     @FXML private Label dialogueLabel;
+    @FXML private Label rankTextLabel; // Add this if you need a label for rank text
     
-    
-    // FXML ImageView Components
     @FXML private ImageView receptionistimage;
-    @FXML private ImageView rankImageView; // Added this field for rank image
-    @FXML private ImageView rankviewlabel;
+    @FXML private ImageView rankviewlabel; // This will be used instead of rankImage
     
-    // User Data
-    private String username;
-    private int currentExp = 0;
-    private int level = 1;
-    private String rank = "Rookie";
-    private boolean dailyLoginClaimed = false;
+    // Constants
+    private static final String DATA_FILE = "progression_data.json";
+    private static final String IMG_PATH = "resources/img/";
+    
+    // Color Constants
+    private static final String COLOR_AVAILABLE = "#4CAF50"; // Green
+    private static final String COLOR_DARK_GREY = "#616161"; // Dark Grey
+    private static final String COLOR_LIGHT_GREY = "#9E9E9E"; // Light Grey
+    
+    // XP Values
+    private static final int LOGIN_XP = 25;
+    private static final int MEDITATION_XP = 50;
+    private static final int SCOUTING_XP = 75;
+    private static final int TRAINING_XP = 100;
+    
+    // Timer delays
+    private static final int MEDITATION_TIMER = 5 * 60; // 5 minutes in seconds
+    private static final int SCOUTING_TIMER = 13 * 60; // 13 minutes in seconds  
+    private static final int TRAINING_TIMER = 20 * 60; // 20 minutes in seconds
+    
+    // User progression data
+    private int currentXp = 0;
+    private int currentLevel = 1;
+    private String currentRank = "Rookie";
+    private int xpForNextLevel = 100;
     private LocalDateTime lastLoginTime;
-    private boolean meditationCompleted = false;
-    private boolean scoutingCompleted = false;
-    private boolean trainingCompleted = false;
+    private boolean loginDone = false;
+    private boolean meditationDone = false;
+    private boolean scoutingDone = false;
+    private boolean trainingDone = false;
+    
+    // Countdown timers
+    private int meditationCountdown = 0;
+    private int scoutingCountdown = 0;
+    private int trainingCountdown = 0;
     
     // Timers
-    private Timeline dailyResetTimer;
-    private Timeline meditationTimer;
-    private Timeline scoutingTimer;
-    private Timeline trainingTimer;
+    private Timer autoSaveTimer;
+    private Timer meditationTimer;
+    private Timer scoutingTimer;
+    private Timer trainingTimer;
     
-    // EXP values for activities
-    private final int LOGIN_EXP = 20;
-    private final int MEDITATION_EXP = 30;
-    private final int SCOUTING_EXP = 40;
-    private final int TRAINING_EXP = 50;
-    
-    // Encouraging messages
-    private final List<String> encouragingMessages = Arrays.asList(
-        "You've done such a great job completing everything.",
-        "I am proud of you, keep up the good work!"
-    );
-    
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    /**
+     * Initialize the controller
+     */
+    @FXML
+    public void initialize() {
+        // Debug info
+        System.out.println("---- FXML Components Initialization Status ----");
+        System.out.println("dailybtn: " + (dailybtn != null));
+        System.out.println("meditationBtn: " + (meditationBtn != null));
+        System.out.println("scoutingMissionBtn: " + (scoutingMissionBtn != null));
+        System.out.println("trainingGroundsBtn: " + (trainingGroundsBtn != null));
+        System.out.println("receptionistimage: " + (receptionistimage != null));
+        System.out.println("rankviewlabel: " + (rankviewlabel != null));
+        System.out.println("dialogueLabel: " + (dialogueLabel != null));
+        System.out.println("rankTextLabel: " + (rankTextLabel != null));
+        System.out.println("----------------------------------------");
+        
         loadUserData();
-        // Initialize components first before using them
-        initializeComponents();
-        setupButtons();
-        checkDailyLoginStatus();
-        updateRankView();
+        setupAutoSave();
+        setupButtonHoverEffects();
+        
+        // Check all UI elements before updating UI
+        if (checkUiComponents()) {
+            updateUIState();
+        } else {
+            System.err.println("ERROR: Some UI components are missing. UI update skipped to avoid crashes.");
+        }
+        
+        // Check if a new day has passed since last login
+        if (lastLoginTime != null && 
+            ChronoUnit.HOURS.between(lastLoginTime, LocalDateTime.now()) >= 24) {
+            resetDailyTasks();
+        }
     }
     
-    // Added this method to ensure components are properly initialized
-    private void initializeComponents() {
-        // Set default values for labels if they're not null
-        if (loginExpLabel != null) loginExpLabel.setText("+" + LOGIN_EXP + " XP");
-        if (meditationExpLabel != null) meditationExpLabel.setText("+" + MEDITATION_EXP + " XP");
-        if (scoutExpLabel != null) scoutExpLabel.setText("+" + SCOUTING_EXP + " XP");
-        if (trainingExpLabel != null) trainingExpLabel.setText("+" + TRAINING_EXP + " XP");
+    /**
+     * Check if all essential UI components are not null
+     */
+    private boolean checkUiComponents() {
+        boolean buttonsOk = dailybtn != null && meditationBtn != null && 
+                          scoutingMissionBtn != null && trainingGroundsBtn != null;
         
-        // Initialize buttons with default text if they're not null
-        if (meditationBtn != null) meditationBtn.setText("Honing the Mind (Meditate for 5 minutes)");
-        if (scoutingMissionBtn != null) scoutingMissionBtn.setText("Scouting Mission (Take a walk for 1km)");
-        if (trainingGroundsBtn != null) trainingGroundsBtn.setText("Training Grounds (Do any forms of exercise)");
+        boolean labelsOk = dialogueLabel != null;
+        
+        boolean imagesOk = receptionistimage != null && rankviewlabel != null;
+        
+        return buttonsOk && labelsOk && imagesOk;
     }
     
-    private void setupButtons() {
-        if (dailybtn != null) dailybtn.setOnAction(event -> claimDailyLogin());
-        if (meditationBtn != null) meditationBtn.setOnAction(event -> startMeditation());
-        if (scoutingMissionBtn != null) scoutingMissionBtn.setOnAction(event -> startScoutingMission());
-        if (trainingGroundsBtn != null) trainingGroundsBtn.setOnAction(event -> startTraining());
-        
-        // Initially disable progression buttons if daily login not claimed
-        updateButtonStates();
+    /**
+     * Set up automatic data saving
+     */
+    private void setupAutoSave() {
+        autoSaveTimer = new Timer(true);
+        autoSaveTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                saveUserData();
+            }
+        }, 5000, 5000); // Every 5 seconds
     }
     
-    private void loadUserData() {
-        File file = new File("user_data.json");
+    /**
+     * Reset all daily tasks
+     */
+    private void resetDailyTasks() {
+        loginDone = false;
+        meditationDone = false;
+        scoutingDone = false;
+        trainingDone = false;
         
-        if (!file.exists()) {
-            // If file doesn't exist, create new user data
-            System.out.println("No existing user data found. Creating new profile.");
-            saveUserData();
+        lastLoginTime = LocalDateTime.now();
+        saveUserData();
+        updateUIState();
+    }
+    
+    /**
+     * Set up hover effects for buttons
+     */
+    private void setupButtonHoverEffects() {
+        setupButtonHover(dailybtn);
+        setupButtonHover(meditationBtn);
+        setupButtonHover(scoutingMissionBtn);
+        setupButtonHover(trainingGroundsBtn);
+    }
+    
+    /**
+     * Add hover and click effects to a button
+     */
+    private void setupButtonHover(Button button) {
+        if (button == null) {
+            System.err.println("Warning: Attempted to setup hover effects on a null button.");
             return;
         }
         
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            StringBuilder content = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line);
+        button.addEventHandler(MouseEvent.MOUSE_ENTERED, e -> {
+            if (!button.isDisabled()) {
+                ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(200), button);
+                scaleTransition.setToX(1.05);
+                scaleTransition.setToY(1.05);
+                scaleTransition.play();
             }
+        });
+        
+        button.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
+            ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(200), button);
+            scaleTransition.setToX(1.0);
+            scaleTransition.setToY(1.0);
+            scaleTransition.play();
+        });
+        
+        button.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+            if (!button.isDisabled()) {
+                ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(100), button);
+                scaleTransition.setToX(0.95);
+                scaleTransition.setToY(0.95);
+                scaleTransition.play();
+            }
+        });
+        
+        button.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+            if (!button.isDisabled()) {
+                ScaleTransition scaleTransition = new ScaleTransition(Duration.millis(100), button);
+                scaleTransition.setToX(1.0);
+                scaleTransition.setToY(1.0);
+                scaleTransition.play();
+            }
+        });
+    }
+    
+    /**
+     * Handle daily login button action
+     */
+    @FXML
+    public void checkAct(ActionEvent event) {
+        if (!loginDone) {
+            addExp(LOGIN_XP);
+            loginDone = true;
+            lastLoginTime = LocalDateTime.now();
+            updateDialogue("Daily login complete! You earned " + LOGIN_XP + " XP!");
+            PauseTransition pause = new PauseTransition(Duration.seconds(5));
+            pause.setOnFinished(e -> dialogueLabel.setText(""));
+              pause.play();
+            updateUIState();
+            saveUserData();
             
-            JSONObject userData = new JSONObject(content.toString());
+            // Start meditation timer immediately after login
+            startMeditationTimer();
+        }
+    }
+    
+    /**
+     * Handle meditation button action
+     */
+    @FXML
+    public void meditationAct(ActionEvent event) {
+        if (loginDone && !meditationDone && meditationCountdown == 0) {
+            addExp(MEDITATION_XP);
+            meditationDone = true;
+            updateDialogue("Meditation complete! Your mind is sharper. You earned " + MEDITATION_XP + " XP!");
+             PauseTransition pause = new PauseTransition(Duration.seconds(5));
+               pause.setOnFinished(e -> dialogueLabel.setText(""));
+                 pause.play();
+            updateUIState();
+            saveUserData();
             
-            username = userData.has("username") ? userData.getString("username") : "";
+            // Start scouting timer immediately after meditation is completed
+            startScoutingTimer();
+        }
+    }
+    
+    /**
+     * Handle scouting mission button action
+     */
+    @FXML
+    public void scoutingAct(ActionEvent event) {
+        if (loginDone && meditationDone && !scoutingDone && scoutingCountdown == 0) {
+            addExp(SCOUTING_XP);
+            scoutingDone = true;
+            updateDialogue("Scouting mission complete! You discovered new areas. You earned " + SCOUTING_XP + " XP!");
+            PauseTransition pause = new PauseTransition(Duration.seconds(5));
+            pause.setOnFinished(e -> dialogueLabel.setText(""));
+              pause.play();
+            updateUIState();
+            saveUserData();
             
-            // Load progress data if exists
-            if (userData.has("exp")) {
-                currentExp = userData.getInt("exp");
-            }
-            if (userData.has("level")) {
-                level = userData.getInt("level");
-            }
-            if (userData.has("rank")) {
-                rank = userData.getString("rank");
-            }
-            if (userData.has("lastLoginTime")) {
-                lastLoginTime = LocalDateTime.parse(userData.getString("lastLoginTime"));
-                
-                // Check if the last login was more than 24 hours ago
-                if (ChronoUnit.HOURS.between(lastLoginTime, LocalDateTime.now()) >= 24) {
-                    dailyLoginClaimed = false;
-                } else {
-                    dailyLoginClaimed = true;
+            // Start training timer immediately after scouting is completed
+            startTrainingTimer();
+        }
+    }
+    
+    /**
+     * Handle training grounds button action
+     */
+    @FXML
+    public void trainingAct(ActionEvent event) {
+        if (loginDone && meditationDone && scoutingDone && !trainingDone && trainingCountdown == 0) {
+            addExp(TRAINING_XP);
+            trainingDone = true;
+            updateDialogue("Training complete! Your skills improved. You earned " + TRAINING_XP + " XP!");
+            PauseTransition pause = new PauseTransition(Duration.seconds(5));
+            pause.setOnFinished(e -> dialogueLabel.setText(""));
+              pause.play();
+            updateUIState();
+            saveUserData();
+        }
+    }
+    
+    /**
+     * Add experience points and check for level up
+     */
+    private void addExp(int exp) {
+        int previousLevel = currentLevel;
+        currentXp += exp;
+        
+        // Check for level up
+        while (currentXp >= xpForNextLevel) {
+            currentXp -= xpForNextLevel;
+            currentLevel++;
+            
+            // Update rank and XP threshold based on level
+            updateRankAndXpThreshold();
+        }
+        
+        // If level changed, update rank image and play animation
+        if (currentLevel != previousLevel) {
+            updateRankImage();
+            showRankUpAnimation();
+            updateDialogue("Congratulations for ranking up! You did great, keep up with the discipline!");
+        }
+    }
+    
+    /**
+     * Update rank and XP threshold based on current level
+     */
+    private void updateRankAndXpThreshold() {
+        if (currentLevel >= 1 && currentLevel <= 4) {
+            currentRank = "Rookie";
+            xpForNextLevel = 100;
+        } else if (currentLevel >= 5 && currentLevel <= 9) {
+            currentRank = "Novice";
+            xpForNextLevel = 200;
+        } else if (currentLevel >= 10 && currentLevel <= 14) {
+            currentRank = "Veteran";
+            xpForNextLevel = 300;
+        } else if (currentLevel >= 15 && currentLevel <= 19) {
+            currentRank = "Elite";
+            xpForNextLevel = 400;
+        } else if (currentLevel >= 20 && currentLevel <= 25) {
+            currentRank = "Master";
+            xpForNextLevel = 500;
+        }
+    }
+    
+    /**
+     * Update UI elements based on current state
+     */
+    private void updateUIState() {
+        // Update rank view and progress
+        // Update the rank text if we have a rankTextLabel
+        if (rankTextLabel != null) {
+            rankTextLabel.setText(currentRank + " Level " + currentLevel + " - XP: " + currentXp + "/" + xpForNextLevel);
+        }
+        
+        // Update login button
+        if (dailybtn != null) {
+            if (loginDone) {
+                dailybtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                dailybtn.setDisable(true);
+                if (loginExpLabel != null) {
+                    loginExpLabel.setVisible(false);
+                }
+            } else {
+                dailybtn.setStyle("-fx-background-color: " + COLOR_AVAILABLE);
+                dailybtn.setDisable(false);
+                if (loginExpLabel != null) {
+                    loginExpLabel.setText("+" + LOGIN_XP + " XP");
+                    loginExpLabel.setVisible(true);
                 }
             }
-            if (userData.has("dailyLoginClaimed")) {
-                dailyLoginClaimed = userData.getBoolean("dailyLoginClaimed");
-            }
-            if (userData.has("meditationCompleted")) {
-                meditationCompleted = userData.getBoolean("meditationCompleted");
-            }
-            if (userData.has("scoutingCompleted")) {
-                scoutingCompleted = userData.getBoolean("scoutingCompleted");
-            }
-            if (userData.has("trainingCompleted")) {
-                trainingCompleted = userData.getBoolean("trainingCompleted");
-            }
-            
-        } catch (IOException | JSONException e) {
-            System.out.println("Error reading user data: " + e.getMessage());
-            saveUserData();
         }
-    }
-    
-    private void saveUserData() {
-        JSONObject userData = new JSONObject();
         
-        userData.put("username", username != null ? username : "");
-        userData.put("exp", currentExp);
-        userData.put("level", level);
-        userData.put("rank", rank);
-        userData.put("lastLoginTime", lastLoginTime != null ? lastLoginTime.toString() : LocalDateTime.now().toString());
-        userData.put("dailyLoginClaimed", dailyLoginClaimed);
-        userData.put("meditationCompleted", meditationCompleted);
-        userData.put("scoutingCompleted", scoutingCompleted);
-        userData.put("trainingCompleted", trainingCompleted);
-        
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("user_data.json"))) {
-            writer.write(userData.toString(4)); // Pretty print with 4-space indent
-        } catch (IOException e) {
-            System.out.println("Error saving user data: " + e.getMessage());
-        }
-    }
-    
-    private void checkDailyLoginStatus() {
-        if (lastLoginTime != null) {
-            long hoursSinceLastLogin = ChronoUnit.HOURS.between(lastLoginTime, LocalDateTime.now());
-            
-            if (hoursSinceLastLogin >= 24) {
-                // Reset daily tasks
-                dailyLoginClaimed = false;
-                meditationCompleted = false;
-                scoutingCompleted = false;
-                trainingCompleted = false;
-                saveUserData();
+        // Update meditation button
+        if (meditationBtn != null) {
+            if (!loginDone) {
+                meditationBtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                meditationBtn.setDisable(true);
+                if (meditationExpLabel != null) {
+                    meditationExpLabel.setVisible(false);
+                }
+            } else if (meditationDone) {
+                meditationBtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                meditationBtn.setDisable(true);
+                if (meditationExpLabel != null) {
+                    meditationExpLabel.setVisible(false);
+                }
+            } else if (meditationCountdown > 0) {
+                meditationBtn.setStyle("-fx-background-color: " + COLOR_LIGHT_GREY);
+                meditationBtn.setDisable(true);
+                int minutes = meditationCountdown / 60;
+                int seconds = meditationCountdown % 60;
+                meditationBtn.setText("Honing the mind (" + String.format("%d:%02d", minutes, seconds) + ")");
+                if (meditationExpLabel != null) {
+                    meditationExpLabel.setText("+" + MEDITATION_XP + " XP");
+                    meditationExpLabel.setVisible(true);
+                }
             } else {
-                // Set up timer for the next day reset
-                long minutesUntilReset = 24 * 60 - ChronoUnit.MINUTES.between(lastLoginTime, LocalDateTime.now());
-                
-                dailyResetTimer = new Timeline(
-                    new KeyFrame(Duration.minutes(minutesUntilReset), e -> {
-                        dailyLoginClaimed = false;
-                        meditationCompleted = false;
-                        scoutingCompleted = false;
-                        trainingCompleted = false;
-                        updateUI();
-                        saveUserData();
-                    })
-                );
-                dailyResetTimer.play();
+                meditationBtn.setStyle("-fx-background-color: " + COLOR_AVAILABLE);
+                meditationBtn.setDisable(false);
+                meditationBtn.setText("Honing the mind (Meditate for 5 minutes)");
+                if (meditationExpLabel != null) {
+                    meditationExpLabel.setText("+" + MEDITATION_XP + " XP");
+                    meditationExpLabel.setVisible(true);
+                }
             }
         }
         
-        updateUI();
-    }
-    
-    private void claimDailyLogin() {
-        if (!dailyLoginClaimed) {
-            dailyLoginClaimed = true;
-            lastLoginTime = LocalDateTime.now();
-            addExp(LOGIN_EXP);
-            if (loginExpLabel != null) loginExpLabel.setVisible(false);
-            if (dailybtn != null) dailybtn.setDisable(true);
-            
-            // Set up daily reset timer
-            dailyResetTimer = new Timeline(
-                new KeyFrame(Duration.hours(24), e -> {
-                    dailyLoginClaimed = false;
-                    meditationCompleted = false;
-                    scoutingCompleted = false;
-                    trainingCompleted = false;
-                    updateUI();
-                    saveUserData();
-                })
-            );
-            dailyResetTimer.play();
-            
-            updateButtonStates();
-            saveUserData();
-        }
-    }
-    
-    private void startMeditation() {
-        if (dailyLoginClaimed && !meditationCompleted && meditationBtn != null) {
-            meditationBtn.setDisable(true);
-            meditationBtn.setStyle("-fx-background-color: lightgray;");
-            
-            // Start 5-minute meditation timer
-            final int[] secondsRemaining = {5 * 60};
-            meditationTimer = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> {
-                    secondsRemaining[0]--;
-                    int minutes = secondsRemaining[0] / 60;
-                    int seconds = secondsRemaining[0] % 60;
-                    meditationBtn.setText(String.format("Meditating... %d:%02d", minutes, seconds));
-                    
-                    if (secondsRemaining[0] <= 0) {
-                        meditationCompleted = true;
-                        addExp(MEDITATION_EXP);
-                        if (meditationExpLabel != null) meditationExpLabel.setVisible(false);
-                        meditationBtn.setText("Meditation Completed");
-                        updateButtonStates();
-                        saveUserData();
-                        meditationTimer.stop();
-                    }
-                })
-            );
-            meditationTimer.setCycleCount(5 * 60);
-            meditationTimer.play();
-        }
-    }
-    
-    private void startScoutingMission() {
-        if (dailyLoginClaimed && meditationCompleted && !scoutingCompleted && scoutingMissionBtn != null) {
-            scoutingMissionBtn.setDisable(true);
-            scoutingMissionBtn.setStyle("-fx-background-color: lightgray;");
-            
-            // Start 13-minute scouting timer (simulating a 1km walk)
-            final int[] secondsRemaining = {13 * 60};
-            scoutingTimer = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> {
-                    secondsRemaining[0]--;
-                    int minutes = secondsRemaining[0] / 60;
-                    int seconds = secondsRemaining[0] % 60;
-                    scoutingMissionBtn.setText(String.format("Walking... %d:%02d", minutes, seconds));
-                    
-                    if (secondsRemaining[0] <= 0) {
-                        scoutingCompleted = true;
-                        addExp(SCOUTING_EXP);
-                        if (scoutExpLabel != null) scoutExpLabel.setVisible(false);
-                        scoutingMissionBtn.setText("Scouting Completed");
-                        updateButtonStates();
-                        saveUserData();
-                        scoutingTimer.stop();
-                    }
-                })
-            );
-            scoutingTimer.setCycleCount(13 * 60);
-            scoutingTimer.play();
-        }
-    }
-    
-    private void startTraining() {
-        if (dailyLoginClaimed && meditationCompleted && scoutingCompleted && !trainingCompleted && trainingGroundsBtn != null) {
-            trainingGroundsBtn.setDisable(true);
-            trainingGroundsBtn.setStyle("-fx-background-color: lightgray;");
-            
-            // Start 20-minute training timer
-            final int[] secondsRemaining = {20 * 60};
-            trainingTimer = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> {
-                    secondsRemaining[0]--;
-                    int minutes = secondsRemaining[0] / 60;
-                    int seconds = secondsRemaining[0] % 60;
-                    trainingGroundsBtn.setText(String.format("Training... %d:%02d", minutes, seconds));
-                    
-                    if (secondsRemaining[0] <= 0) {
-                        trainingCompleted = true;
-                        addExp(TRAINING_EXP);
-                        if (trainingExpLabel != null) trainingExpLabel.setVisible(false);
-                        trainingGroundsBtn.setText("Training Completed");
-                        updateButtonStates();
-                        checkAllTasksCompleted();
-                        saveUserData();
-                        trainingTimer.stop();
-                    }
-                })
-            );
-            trainingTimer.setCycleCount(20 * 60);
-            trainingTimer.play();
-        }
-    }
-    
-    private void addExp(int expAmount) {
-        currentExp += expAmount;
-        checkLevelUp();
-        updateRankView();
-    }
-    
-    private void checkLevelUp() {
-        int expRequired = getExpRequiredForNextLevel();
-        
-        if (currentExp >= expRequired) {
-            currentExp -= expRequired;
-            level++;
-            updateRank();
-            
-            // Check for level up again in case multiple levels gained
-            checkLevelUp();
-        }
-    }
-    
-    private int getExpRequiredForNextLevel() {
-        if (level >= 1 && level <= 4) {
-            return 100; // Rookie
-        } else if (level >= 5 && level <= 9) {
-            return 200; // Novice
-        } else if (level >= 10 && level <= 14) {
-            return 300; // Veteran
-        } else if (level >= 15 && level <= 19) {
-            return 400; // Elite
-        } else if (level >= 20 && level <= 25) {
-            return 500; // Master
-        } else {
-            return 500; // Default for beyond level 25
-        }
-    }
-    
-    private void updateRank() {
-        if (level >= 1 && level <= 4) {
-            rank = "Rookie";
-        } else if (level >= 5 && level <= 9) {
-            rank = "Novice";
-        } else if (level >= 10 && level <= 14) {
-            rank = "Veteran";
-        } else if (level >= 15 && level <= 19) {
-            rank = "Elite";
-        } else if (level >= 20) {
-            rank = "Master";
+        // Update scouting button
+        if (scoutingMissionBtn != null) {
+            if (!meditationDone) {
+                scoutingMissionBtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                scoutingMissionBtn.setDisable(true);
+                if (scoutExpLabel != null) {
+                    scoutExpLabel.setVisible(false);
+                }
+            } else if (scoutingDone) {
+                scoutingMissionBtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                scoutingMissionBtn.setDisable(true);
+                if (scoutExpLabel != null) {
+                    scoutExpLabel.setVisible(false);
+                }
+            } else if (scoutingCountdown > 0) {
+                scoutingMissionBtn.setStyle("-fx-background-color: " + COLOR_LIGHT_GREY);
+                scoutingMissionBtn.setDisable(true);
+                int minutes = scoutingCountdown / 60;
+                int seconds = scoutingCountdown % 60;
+                scoutingMissionBtn.setText("Scouting Mission (" + String.format("%d:%02d", minutes, seconds) + ")");
+                if (scoutExpLabel != null) {
+                    scoutExpLabel.setText("+" + SCOUTING_XP + " XP");
+                    scoutExpLabel.setVisible(true);
+                }
+            } else {
+                scoutingMissionBtn.setStyle("-fx-background-color: " + COLOR_AVAILABLE);
+                scoutingMissionBtn.setDisable(false);
+                scoutingMissionBtn.setText("Scouting Mission (Take a walk for 1km)");
+                if (scoutExpLabel != null) {
+                    scoutExpLabel.setText("+" + SCOUTING_XP + " XP");
+                    scoutExpLabel.setVisible(true);
+                }
+            }
         }
         
+        // Update training button
+        if (trainingGroundsBtn != null) {
+            if (!scoutingDone) {
+                trainingGroundsBtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                trainingGroundsBtn.setDisable(true);
+                if (trainingExpLabel != null) {
+                    trainingExpLabel.setVisible(false);
+                }
+            } else if (trainingDone) {
+                trainingGroundsBtn.setStyle("-fx-background-color: " + COLOR_DARK_GREY);
+                trainingGroundsBtn.setDisable(true);
+                if (trainingExpLabel != null) {
+                    trainingExpLabel.setVisible(false);
+                }
+            } else if (trainingCountdown > 0) {
+                trainingGroundsBtn.setStyle("-fx-background-color: " + COLOR_LIGHT_GREY);
+                trainingGroundsBtn.setDisable(true);
+                int minutes = trainingCountdown / 60;
+                int seconds = trainingCountdown % 60;
+                trainingGroundsBtn.setText("Training Grounds (" + String.format("%d:%02d", minutes, seconds) + ")");
+                if (trainingExpLabel != null) {
+                    trainingExpLabel.setText("+" + TRAINING_XP + " XP");
+                    trainingExpLabel.setVisible(true);
+                }
+            } else {
+                trainingGroundsBtn.setStyle("-fx-background-color: " + COLOR_AVAILABLE);
+                trainingGroundsBtn.setDisable(false);
+                trainingGroundsBtn.setText("Training Grounds (Do any forms of exercise)");
+                if (trainingExpLabel != null) {
+                    trainingExpLabel.setText("+" + TRAINING_XP + " XP");
+                    trainingExpLabel.setVisible(true);
+                }
+            }
+        }
+        
+        // Update rank image
         updateRankImage();
     }
     
+    /**
+     * Update the rank image based on current level
+     */
     private void updateRankImage() {
-        if (rankImageView == null) return;
+        if (rankviewlabel == null) {
+            System.err.println("WARNING: rankviewlabel is null in updateRankImage()");
+            return;
+        }
         
-        String imagePath = "resources/img/" + rank + "Rank.png";
+        String rankImageFile = "";
+        
+        if (currentLevel >= 1 && currentLevel <= 4) {
+            rankImageFile = "RookieRank.png";
+        } else if (currentLevel >= 5 && currentLevel <= 9) {
+            rankImageFile = "NoviceRank.png";
+        } else if (currentLevel >= 10 && currentLevel <= 14) {
+            rankImageFile = "VeteranRank.png";
+        } else if (currentLevel >= 15 && currentLevel <= 19) {
+            rankImageFile = "EliteRank.png";
+        } else if (currentLevel >= 20) {
+            rankImageFile = "MasterRank.png";
+        }
+        
         try {
-            // Using File URL to load image from external directory
-            File imageFile = new File(imagePath);
-            Image rankImage = new Image(imageFile.toURI().toString());
-            rankImageView.setImage(rankImage);
+            File imageFile = new File(IMG_PATH + rankImageFile);
+            if (imageFile.exists()) {
+                rankviewlabel.setImage(new Image(imageFile.toURI().toString()));
+            } else {
+                System.err.println("WARNING: Rank image file not found: " + imageFile.getAbsolutePath());
+            }
         } catch (Exception e) {
-            System.out.println("Error loading rank image: " + e.getMessage());
+            System.err.println("ERROR loading rank image: " + e.getMessage());
         }
     }
     
-    private void updateRankView() {
-        // If you want to update the ImageView for rank information
-        if (rankviewlabel != null) {
-            // Since rankviewlabel is an ImageView, we need to load an appropriate image
-            try {
-                String imagePath = "resources/img/" + rank + "Rank.png";
-                // Using File URL to load image from external directory
-                File imageFile = new File(imagePath);
-                Image rankImage = new Image(imageFile.toURI().toString());
-                rankviewlabel.setImage(rankImage);
-            } catch (Exception e) {
-                System.out.println("Error loading rank image for rankviewlabel: " + e.getMessage());
+    /**
+     * Show animation for ranking up
+     */
+    private void showRankUpAnimation() {
+        if (receptionistimage == null) {
+            System.err.println("WARNING: receptionistimage is null in showRankUpAnimation()");
+            return;
+        }
+        
+        try {
+            // Change receptionist image to happy
+            File happyFile = new File(IMG_PATH + "Receptionist_Happy.png");
+            if (happyFile.exists()) {
+                receptionistimage.setImage(new Image(happyFile.toURI().toString()));
+            
+                // Create jump animation
+                TranslateTransition jump = new TranslateTransition(Duration.millis(300), receptionistimage);
+                jump.setByY(-20);
+                jump.setCycleCount(2);
+                jump.setAutoReverse(true);
+                jump.play();
+                
+                // Reset to idle after animation
+                jump.setOnFinished(event -> {
+                    // Schedule returning to idle after 3 seconds
+                    Timer idleTimer = new Timer(true);
+                    idleTimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            Platform.runLater(() -> {
+                                File idleFile = new File(IMG_PATH + "Receptionist_Idle.png");
+                                if (idleFile.exists()) {
+                                    receptionistimage.setImage(new Image(idleFile.toURI().toString()));
+                                }
+                            });
+                        }
+                    }, 3000);
+                });
+            } else {
+                System.err.println("WARNING: Happy receptionist image not found: " + happyFile.getAbsolutePath());
             }
+        } catch (Exception e) {
+            System.err.println("ERROR in showRankUpAnimation: " + e.getMessage());
         }
     }
     
-    private void updateButtonStates() {
-        // Daily Login Button
-        if (dailybtn != null) {
-            dailybtn.setDisable(dailyLoginClaimed);
-        }
-        
-        if (loginExpLabel != null) {
-            loginExpLabel.setVisible(!dailyLoginClaimed);
-        }
-        
-        // Meditation Button
-        if (meditationBtn != null) {
-            if (!dailyLoginClaimed) {
-                meditationBtn.setDisable(true);
-                meditationBtn.setStyle("-fx-background-color: darkgray;");
-            } else if (!meditationCompleted) {
-                meditationBtn.setDisable(false);
-                meditationBtn.setStyle("");
-                meditationBtn.setText("Honing the Mind (Meditate for 5 minutes)");
-            }
-        }
-        
-        if (meditationExpLabel != null) {
-            meditationExpLabel.setVisible(dailyLoginClaimed && !meditationCompleted);
-        }
-        
-        // Scouting Button
-        if (scoutingMissionBtn != null) {
-            if (!dailyLoginClaimed || !meditationCompleted) {
-                scoutingMissionBtn.setDisable(true);
-                scoutingMissionBtn.setStyle("-fx-background-color: darkgray;");
-            } else if (!scoutingCompleted) {
-                scoutingMissionBtn.setDisable(false);
-                scoutingMissionBtn.setStyle("");
-                scoutingMissionBtn.setText("Scouting Mission (Take a walk for 1km)");
-            }
-        }
-        
-        if (scoutExpLabel != null) {
-            scoutExpLabel.setVisible(dailyLoginClaimed && meditationCompleted && !scoutingCompleted);
-        }
-        
-        // Training Button
-        if (trainingGroundsBtn != null) {
-            if (!dailyLoginClaimed || !meditationCompleted || !scoutingCompleted) {
-                trainingGroundsBtn.setDisable(true);
-                trainingGroundsBtn.setStyle("-fx-background-color: darkgray;");
-            } else if (!trainingCompleted) {
-                trainingGroundsBtn.setDisable(false);
-                trainingGroundsBtn.setStyle("");
-                trainingGroundsBtn.setText("Training Grounds (Do any forms of exercise)");
-            }
-        }
-        
-        if (trainingExpLabel != null) {
-            trainingExpLabel.setVisible(dailyLoginClaimed && meditationCompleted && scoutingCompleted && !trainingCompleted);
-        }
-    }
-    
-    private void checkAllTasksCompleted() {
-        if (!dailyLoginClaimed || !meditationCompleted || !scoutingCompleted || !trainingCompleted) return;
-        
+    /**
+     * Update dialogue text
+     */
+    private void updateDialogue(String message) {
         if (dialogueLabel != null) {
-            Random random = new Random();
-            String message = encouragingMessages.get(random.nextInt(encouragingMessages.size()));
             dialogueLabel.setText(message);
         }
+    }
+    
+    /**
+     * Start meditation timer
+     */
+    private void startMeditationTimer() {
+        meditationCountdown = MEDITATION_TIMER;
         
-        // Change receptionist image to happy
-        if (receptionistimage != null) {
-            try {
-                String imagePath = "resources/img/Receptionist_Happy.png";
-                // Using File URL to load image from external directory
-                File imageFile = new File(imagePath);
-                Image happyReceptionist = new Image(imageFile.toURI().toString());
-                receptionistimage.setImage(happyReceptionist);
-            } catch (Exception e) {
-                System.out.println("Error loading receptionist image: " + e.getMessage());
+        if (meditationTimer != null) {
+            meditationTimer.cancel();
+        }
+        
+        meditationTimer = new Timer(true);
+        meditationTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    if (meditationCountdown > 0) {
+                        meditationCountdown--;
+                        updateUIState();
+                    } else {
+                        // When timer reaches zero, update the UI to make button clickable
+                        meditationTimer.cancel();
+                        meditationTimer = null;
+                        updateDialogue("Meditation time is over. Click the meditation button to claim your XP!");
+                        updateUIState();
+                    }
+                });
             }
+        }, 1000, 1000); // Every second
+    }
+    
+    /**
+     * Start scouting timer
+     */
+    private void startScoutingTimer() {
+        scoutingCountdown = SCOUTING_TIMER;
+        
+        if (scoutingTimer != null) {
+            scoutingTimer.cancel();
+        }
+        
+        scoutingTimer = new Timer(true);
+        scoutingTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    if (scoutingCountdown > 0) {
+                        scoutingCountdown--;
+                        updateUIState();
+                    } else {
+                        // When timer reaches zero, update the UI to make button clickable
+                        scoutingTimer.cancel();
+                        scoutingTimer = null;
+                        updateDialogue("Scouting time is over. Click the scouting button to claim your XP!");
+                        updateUIState();
+                    }
+                });
+            }
+        }, 1000, 1000); // Every second
+    }
+    
+    /**
+     * Start training timer
+     */
+    private void startTrainingTimer() {
+        trainingCountdown = TRAINING_TIMER;
+        
+        if (trainingTimer != null) {
+            trainingTimer.cancel();
+        }
+        
+        trainingTimer = new Timer(true);
+        trainingTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    if (trainingCountdown > 0) {
+                        trainingCountdown--;
+                        updateUIState();
+                    } else {
+                        // When timer reaches zero, update the UI to make button clickable
+                        trainingTimer.cancel();
+                        trainingTimer = null;
+                        updateDialogue("Training time is over. Click the training button to claim your XP!");
+                        updateUIState();
+                    }
+                });
+            }
+        }, 1000, 1000); // Every second
+    }
+    
+    /**
+     * Save user data to JSON file
+     */
+    private void saveUserData() {
+        JSONObject userData = new JSONObject();
+        userData.put("currentXp", currentXp);
+        userData.put("currentLevel", currentLevel);
+        userData.put("currentRank", currentRank);
+        userData.put("xpForNextLevel", xpForNextLevel);
+        userData.put("lastLoginTime", lastLoginTime != null ? lastLoginTime.toString() : null);
+        userData.put("loginDone", loginDone);
+        userData.put("meditationDone", meditationDone);
+        userData.put("scoutingDone", scoutingDone);
+        userData.put("trainingDone", trainingDone);
+        
+        try (FileWriter file = new FileWriter(DATA_FILE)) {
+            file.write(userData.toString());
+            file.flush();
+        } catch (Exception e) {
+            System.err.println("ERROR saving user data: " + e.getMessage());
+            updateDialogue("Failed to save progress: " + e.getMessage());
         }
     }
     
-    private void updateUI() {
-        // Update EXP labels
-        if (loginExpLabel != null) loginExpLabel.setText("+" + LOGIN_EXP + " XP");
-        if (meditationExpLabel != null) meditationExpLabel.setText("+" + MEDITATION_EXP + " XP");
-        if (scoutExpLabel != null) scoutExpLabel.setText("+" + SCOUTING_EXP + " XP");
-        if (trainingExpLabel != null) trainingExpLabel.setText("+" + TRAINING_EXP + " XP");
-        
-        // Update rank view
-        updateRankView();
-        
-        // Update button states
-        updateButtonStates();
-        
-        // Set default receptionist image
-        if (receptionistimage != null) {
-            try {
-                String imagePath = "resources/img/Receptionist_Idle.png";
-                // Using File URL to load image from external directory
-                File imageFile = new File(imagePath);
-                Image idleReceptionist = new Image(imageFile.toURI().toString());
-                receptionistimage.setImage(idleReceptionist);
-            } catch (Exception e) {
-                System.out.println("Error loading receptionist image: " + e.getMessage());
+    /**
+     * Load user data from JSON file
+     */
+    private void loadUserData() {
+        File dataFile = new File(DATA_FILE);
+        if (!dataFile.exists()) {
+            // First-time user, set up with defaults
+            updateRankAndXpThreshold();
+            updateDialogue("Welcome, new adventurer! Complete daily tasks to earn XP and ranks.");
+            if (receptionistimage != null) {
+                try {
+                    File idleFile = new File(IMG_PATH + "Receptionist_Idle.png");
+                    if (idleFile.exists()) {
+                        receptionistimage.setImage(new Image(idleFile.toURI().toString()));
+                    } else {
+                        System.err.println("WARNING: Idle receptionist image not found: " + idleFile.getAbsolutePath());
+                    }
+                } catch (Exception e) {
+                    System.err.println("ERROR loading receptionist image: " + e.getMessage());
+                }
             }
+            return;
         }
         
-        // Set rank image
-        updateRankImage();
-        
-        // Check if all tasks completed
-        checkAllTasksCompleted();
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(DATA_FILE)));
+            JSONObject userData = new JSONObject(content);
+            
+            currentXp = userData.getInt("currentXp");
+            currentLevel = userData.getInt("currentLevel");
+            currentRank = userData.getString("currentRank");
+            xpForNextLevel = userData.getInt("xpForNextLevel");
+            
+            String lastLoginTimeStr = userData.has("lastLoginTime") ? userData.getString("lastLoginTime") : null;
+            lastLoginTime = lastLoginTimeStr != null ? LocalDateTime.parse(lastLoginTimeStr) : null;
+            
+            loginDone = userData.getBoolean("loginDone");
+            meditationDone = userData.getBoolean("meditationDone");
+            scoutingDone = userData.getBoolean("scoutingDone");
+            trainingDone = userData.getBoolean("trainingDone");
+            
+            updateDialogue("Welcome back, adventurer! Continue your journey.");
+            if (receptionistimage != null) {
+                try {
+                    File idleFile = new File(IMG_PATH + "Receptionist_Idle.png");
+                    if (idleFile.exists()) {
+                        receptionistimage.setImage(new Image(idleFile.toURI().toString()));
+                    } else {
+                        System.err.println("WARNING: Idle receptionist image not found: " + idleFile.getAbsolutePath());
+                    }
+                } catch (Exception e) {
+                    System.err.println("ERROR loading receptionist image: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("ERROR loading user data: " + e.getMessage());
+            updateDialogue("Failed to load progress: " + e.getMessage());
+        }
     }
     
-    // Public method to close all timers when application closes
+    /**
+     * Clean up resources when application closes
+     */
     public void shutdown() {
-        if (dailyResetTimer != null) {
-            dailyResetTimer.stop();
+        if (autoSaveTimer != null) {
+            autoSaveTimer.cancel();
         }
         if (meditationTimer != null) {
-            meditationTimer.stop();
+            meditationTimer.cancel();
         }
         if (scoutingTimer != null) {
-            scoutingTimer.stop();
+            scoutingTimer.cancel();
         }
         if (trainingTimer != null) {
-            trainingTimer.stop();
+            trainingTimer.cancel();
         }
+        
+        // Save final state
+        saveUserData();
     }
 }

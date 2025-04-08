@@ -6,14 +6,15 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Main",
+            "name": "Main with JavaFX",
             "request": "launch",
             "mainClass": "Main",
-            "projectName": "habit-track_c274d8cd"
+            "projectName": "habit-track_c274d8cd",
+            "vmArgs": "--module-path \"C:/Program Files/Java/javafx-sdk-21/lib\" --add-modules javafx.controls,javafx.fxml"
         },
         {
             "type": "java",
-            "name": "Main",
+            "name": "Main in package",
             "request": "launch",
             "mainClass": "habit-track.Main",
             "projectName": "habit-track_c274d8cd",
@@ -23,7 +24,8 @@
             "type": "java",
             "name": "Current File",
             "request": "launch",
-            "mainClass": "${file}"
+            "mainClass": "${file}",
+            "vmArgs": "--module-path \"C:/Program Files/Java/javafx-sdk-21/lib\" --add-modules javafx.controls,javafx.fxml"
         },
         {
             "type": "java",
@@ -31,7 +33,12 @@
             "request": "launch",
             "mainClass": "habit-track.Main",
             "projectName": "habit-track_c274d8cd",
-            "vmArgs": "--module-path \"C:/Program Files/Java/javafx-sdk-21/lib\" --add-modules javafx.controls,javafx.fxml -cp \"${workspaceFolder}/lib/json.jar;${workspaceFolder}/bin\""
+            "vmArgs": "--module-path \"C:/Program Files/Java/javafx-sdk-21/lib\" --add-modules javafx.controls,javafx.fxml",
+            "classpath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/bin",
+                "${workspaceFolder}/lib/json.jar"
+            ]
         }
     ]
 }

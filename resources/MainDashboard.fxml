@@ -39,7 +39,7 @@
             <Font name="VCR OSD Mono" size="9.0" />
          </font>
       </Label>
-      <Button fx:id="dailybtn" layoutX="63.0" layoutY="599.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Check in" textFill="#ffcdac">
+      <Button fx:id="dailybtn" layoutX="63.0" layoutY="599.0" mnemonicParsing="false" onAction="#checkAct" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Check in" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
@@ -49,7 +49,7 @@
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Button fx:id="meditationbtn" layoutX="75.0" layoutY="686.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
+      <Button fx:id="meditationBtn" layoutX="75.0" layoutY="686.0" mnemonicParsing="false" onAction="#meditationAct" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
@@ -59,7 +59,7 @@
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Button fx:id="scoutingMissionBtn" layoutX="75.0" layoutY="783.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
+      <Button fx:id="scoutingMissionBtn" layoutX="75.0" layoutY="783.0" mnemonicParsing="false" onAction="#scoutingAct" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
@@ -69,7 +69,7 @@
             <Font name="VCR OSD Mono" size="18.0" />
          </font>
       </Label>
-      <Button fx:id="trainingGroundsBtn" layoutX="75.0" layoutY="875.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
+      <Button fx:id="trainingGroundsBtn" layoutX="75.0" layoutY="875.0" mnemonicParsing="false" onAction="#trainingAct" prefHeight="29.0" prefWidth="105.0" style="-fx-background-color: #3b1901;" text="Complete" textFill="#ffcdac">
          <font>
             <Font name="VCR OSD Mono" size="15.0" />
          </font>
